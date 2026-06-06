@@ -1,43 +1,39 @@
-// Определяем, на какой мы странице
+// Определяем страницу
 const isTeacher = window.location.pathname.includes('teacher');
 const isStudent = window.location.pathname.includes('student');
 
 let ws;
+let currentStudentName = null;
 
-// Подключение WebSocket с авто-переподключением
+// WebSocket для живых обновлений
 function connectWebSocket() {
     ws = new WebSocket('ws://127.0.0.1:8000/ws');
     ws.onmessage = (event) => {
-        if (event.data === 'update') {
-            loadQueue();
-        }
+        if (event.data === 'update') loadQueue();
     };
-    ws.onclose = () => {
-        setTimeout(connectWebSocket, 3000);
-    };
+    ws.onclose = () => setTimeout(connectWebSocket, 3000);
 }
 
 // Загрузка очереди с сервера и отображение
 async function loadQueue() {
     const response = await fetch('/api/queue');
     const queue = await response.json();
-    
+
     if (isStudent) {
-        const studentName = localStorage.getItem('studentName');
+        // Находим позицию текущего студента по имени (email)
         let position = null;
-        if (studentName) {
-            const found = queue.find(s => s.name === studentName);
+        if (currentStudentName) {
+            const found = queue.find(s => s.name === currentStudentName);
             if (found) position = found.position;
         }
         const statusDiv = document.getElementById('queueStatus');
         if (position) {
             statusDiv.innerText = `Ваше место в очереди: ${position}`;
-            if (position === 1) statusDiv.style.background = '#28a745';
-            else statusDiv.style.background = '#ffc107';
+            statusDiv.style.background = position === 1 ? '#c8e6d9' : '#ffecb3';
         } else {
             statusDiv.innerText = 'Вы ещё не записаны или уже ответили';
         }
-        
+
         const list = document.getElementById('queueList');
         list.innerHTML = '';
         queue.forEach(s => {
@@ -46,37 +42,54 @@ async function loadQueue() {
             list.appendChild(li);
         });
     }
-    
+
     if (isTeacher) {
         const list = document.getElementById('teacherQueueList');
-        list.innerHTML = '';
-        queue.forEach(s => {
-            const li = document.createElement('li');
-            li.innerHTML = `
-                <span>${s.position}. ${s.name} (${s.group})</span>
-                <button class="btn btn-danger" onclick="removeStudent(${s.id})">Удалить</button>
-            `;
-            list.appendChild(li);
-        });
+        if (list) {
+            list.innerHTML = '';
+            queue.forEach(s => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span>${s.position}. ${s.name} (${s.group})</span>
+                                <button class="btn btn-danger" onclick="removeStudent(${s.id})">Удалить</button>`;
+                list.appendChild(li);
+            });
+        }
     }
 }
 
-// Добавление студента (страница студента)
+// Добавление студента (используем email + group)
 async function addStudent(event) {
     event.preventDefault();
-    const name = document.getElementById('studentName').value;
+    const name = document.getElementById('studentName').value;   // email
     const group = document.getElementById('studentGroup').value;
+    const password = document.getElementById('studentPassword')?.value || '';
+
+    if (!name || !group) {
+        alert('Заполните Email и Группу');
+        return;
+    }
+
     const response = await fetch('/api/queue/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, group })
     });
+
+    const msgDiv = document.getElementById('message');
     if (response.ok) {
+        currentStudentName = name;
         localStorage.setItem('studentName', name);
+        msgDiv.style.display = 'block';
+        msgDiv.innerText = '✅ Вы записаны в очередь!';
+        msgDiv.style.color = '#2c7a4d';
         loadQueue();
         document.getElementById('addForm').reset();
+        setTimeout(() => msgDiv.style.display = 'none', 3000);
     } else {
-        alert('Ошибка при записи');
+        msgDiv.style.display = 'block';
+        msgDiv.innerText = '❌ Ошибка при записи. Попробуйте позже.';
+        msgDiv.style.color = '#c44536';
+        setTimeout(() => msgDiv.style.display = 'none', 3000);
     }
 }
 
@@ -98,18 +111,18 @@ async function callNext() {
     }
 }
 
-// Показать QR-код для студентов (преподаватель)
+// Генерация QR-кода для регистрации студентов
 async function showQR() {
     const response = await fetch('/api/qr/student');
     const blob = await response.blob();
     const url = URL.createObjectURL(blob);
     const qrDiv = document.getElementById('qrContainer');
-    qrDiv.innerHTML = `<img src="${url}" alt="QR-код для входа студента"><br>
-                       <a href="/student" target="_blank">Ссылка для студентов</a>`;
+    qrDiv.innerHTML = `<img src="${url}" alt="QR-код"><br><a href="/student" target="_blank">Ссылка для студентов</a>`;
 }
 
 // Инициализация в зависимости от страницы
 if (isStudent) {
+    currentStudentName = localStorage.getItem('studentName');
     connectWebSocket();
     loadQueue();
     document.getElementById('addForm').addEventListener('submit', addStudent);
@@ -119,6 +132,7 @@ if (isTeacher) {
     connectWebSocket();
     loadQueue();
     document.getElementById('callNextBtn').addEventListener('click', callNext);
-    document.getElementById('generateQRBtn').addEventListener('click', showQR);
-    window.removeStudent = removeStudent;
+    const qrBtn = document.getElementById('generateQRBtn');
+    if (qrBtn) qrBtn.addEventListener('click', showQR);
+    window.removeStudent = removeStudent; // чтобы был доступ из onclick
 }
