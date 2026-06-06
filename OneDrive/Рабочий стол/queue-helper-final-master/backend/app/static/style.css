@@ -1,66 +1,110 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 body {
-    font-family: Arial, sans-serif;
-    background: #f4f4f4;
+    font-family: 'Segoe UI', 'Inter', system-ui, sans-serif;
+    background: #f0f0f0;
     margin: 0;
     padding: 20px;
 }
 .container {
     max-width: 800px;
-    margin: auto;
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    margin: 0 auto;
+    background: rgba(196, 196, 196, 1);  /* бежевый */
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 h1, h2 {
     text-align: center;
+    color: #1e2a47;
+    margin-bottom: 20px;
 }
-.btn {
+input {
+    width: 100%;
+    padding: 12px 16px;
+    margin: 8px 0;
+    border: 1px solid #aaa;
+    border-radius: 10px;
+    background: white;
+    font-size: 1rem;
+}
+input:focus {
+    outline: none;
+    border-color: #000;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
+}
+.btn, button, .role-buttons a {
     display: inline-block;
-    background: #007bff;
+    background: rgba(100, 100, 100, 1);
     color: white;
-    padding: 10px 20px;
+    padding: 12px 24px;
     text-decoration: none;
-    border-radius: 5px;
+    border-radius: 10px;
     border: none;
     cursor: pointer;
-    margin: 5px;
+    font-weight: bold;
+    font-size: 1rem;
+    transition: 0.2s;
+}
+.btn:hover, button:hover, .role-buttons a:hover {
+    background: rgba(70, 70, 70, 1);
+    transform: translateY(-2px);
 }
 .btn-danger {
-    background: #dc3545;
+    background: #a00;
 }
-.btn-success {
-    background: #28a745;
-}
-input, button {
-    width: 100%;
-    padding: 10px;
-    margin: 5px 0;
-    box-sizing: border-box;
+.btn-danger:hover {
+    background: #800;
 }
 ul {
     list-style: none;
     padding: 0;
+    margin: 20px 0;
 }
 li {
-    background: #eee;
-    margin: 5px 0;
-    padding: 10px;
+    background: white;
+    margin: 12px 0;
+    padding: 12px 16px;
+    border-radius: 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border-left: 5px solid rgba(100,100,100,1);
+}
+li:first-child {
+    border-left-color: #2c7a4d;
+    background: #e8f5e9;
+}
+#queueStatus {
+    background: #fff3cd;
+    padding: 12px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: bold;
+    margin: 20px 0;
 }
 .role-buttons {
     display: flex;
     justify-content: center;
     gap: 20px;
-    margin-top: 20px;
+    margin: 30px 0;
 }
-#queueStatus {
-    font-weight: bold;
+#qrContainer {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
     text-align: center;
-    background: #ffc107;
-    padding: 10px;
-    border-radius: 5px;
+    margin: 20px 0;
 }
-/* Макет Pixso: https://pixso.net/app/design/k4av7YumlrVTuHLOk7hoHw?icon_type=1&page-id=0%3A1ё*/
+#qrContainer img {
+    max-width: 200px;
+    border-radius: 10px;
+}
+@media (max-width: 640px) {
+    .container { padding: 15px; }
+    .role-buttons { flex-direction: column; gap: 10px; }
+    .btn, button, .role-buttons a { width: 100%; }
+}
